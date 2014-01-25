@@ -1,4 +1,4 @@
-package blasw
+package goblas
 
 func Zdotu(x, y VectorCmplx) complex128 {
 	must(x.Check())

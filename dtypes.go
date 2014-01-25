@@ -1,4 +1,4 @@
-package blasw
+package goblas
 
 import (
 	"errors"

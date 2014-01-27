@@ -6,94 +6,107 @@ import (
 )
 
 type General struct {
-	Data   []float64
-	M, N   int
-	Stride int
+	Order      blas.Order
+	Data       []float64
+	Rows, Cols int
+	Stride     int
 }
 
-func NewGeneral(m, n int, data []float64) General {
+func NewGeneral(o blas.Order, m, n int, data []float64) General {
 	var A General
-	if order == blas.RowMajor {
-		A = General{data, m, n, n}
+	if o == blas.RowMajor {
+		A = General{o, data, m, n, n}
 	} else {
-		A = General{data, m, n, m}
+		A = General{o, data, m, n, m}
 	}
 	must(A.Check())
 	return A
 }
 
+func (A General) Index(i, j int) int {
+	if A.Order == blas.RowMajor {
+		return i*A.Stride + j
+	} else {
+		return i + j*A.Stride
+	}
+}
+
 func (A General) Check() error {
-	if A.N < 0 {
+	if A.Cols < 0 {
 		return errors.New("blas: n < 0")
 	}
-	if A.M < 0 {
+	if A.Rows < 0 {
 		return errors.New("blas: m < 0")
 	}
 	if A.Stride < 1 {
 		return errors.New("blas: illegal stride")
 	}
-	if order == blas.ColMajor {
-		if A.Stride < A.M {
+	if A.Order == blas.ColMajor {
+		if A.Stride < A.Rows {
 			return errors.New("blas: illegal stride")
 		}
-		if (A.N-1)*A.Stride+A.M > len(A.Data) {
+		if (A.Cols-1)*A.Stride+A.Rows > len(A.Data) {
 			return errors.New("blas: insufficient amount of data")
 		}
-	} else if order == blas.RowMajor {
-		if A.Stride < A.N {
+	} else if A.Order == blas.RowMajor {
+		if A.Stride < A.Cols {
 			return errors.New("blas: illegal stride")
 		}
-		if (A.M-1)*A.Stride+A.N > len(A.Data) {
+		if (A.Rows-1)*A.Stride+A.Cols > len(A.Data) {
 			return errors.New("blas: insufficient amount of data")
 		}
+	} else {
+		return errors.New("blas: illegal order")
 	}
 	return nil
 }
 
 func (A General) Row(i int) Vector {
-	if i >= A.M || i < 0 {
+	if i >= A.Rows || i < 0 {
 		panic("blas: index out of range")
 	}
-	if order == blas.RowMajor {
-		return Vector{A.Data[A.Stride*i:], A.N, 1}
-	} else {
-		return Vector{A.Data[i:], A.N, A.Stride}
+	if A.Order == blas.RowMajor {
+		return Vector{A.Data[A.Stride*i:], A.Cols, 1}
+	} else if A.Order == blas.ColMajor {
+		return Vector{A.Data[i:], A.Cols, A.Stride}
 	}
-	panic("unreachable")
+	panic("blas: illegal order")
 }
 
 func (A General) Col(i int) Vector {
-	if i >= A.N || i < 0 {
+	if i >= A.Cols || i < 0 {
 		panic("blas: index out of range")
 	}
-	if order == blas.RowMajor {
-		return Vector{A.Data[i:], A.M, A.Stride}
-	} else {
-		return Vector{A.Data[A.Stride*i:], A.M, 1}
+	if A.Order == blas.RowMajor {
+		return Vector{A.Data[i:], A.Rows, A.Stride}
+	} else if A.Order == blas.ColMajor {
+		return Vector{A.Data[A.Stride*i:], A.Rows, 1}
 	}
-	panic("unreachable")
+	panic("blas: illegal order")
 }
 
 func (A General) Sub(i, j, r, c int) General {
 	must(A.Check())
-	if i >= A.M || i < 0 {
+	if i >= A.Rows || i < 0 {
 		panic("blas: index out of range")
 	}
-	if j >= A.N || i < 0 {
+	if j >= A.Cols || i < 0 {
 		panic("blas: index out of range")
 	}
 	if r < 0 || c < 0 {
 		panic("blas: r < 0 or c < 0")
 	}
-	return General{A.Data[index(i, j, A.Stride):], r, c, A.Stride}
+	return General{A.Order, A.Data[A.Index(i, j):], r, c, A.Stride}
 }
 
 type GeneralBand struct {
+	Order blas.Order
 	General
 	KL, KU int
 }
 
 type Triangular struct {
+	Order  blas.Order
 	Data   []float64
 	N      int
 	Stride int
@@ -102,6 +115,7 @@ type Triangular struct {
 }
 
 type TriangularBand struct {
+	Order  blas.Order
 	Data   []float64
 	N, K   int
 	Stride int
@@ -110,28 +124,32 @@ type TriangularBand struct {
 }
 
 type TriangularPacked struct {
-	Data []float64
-	N    int
-	Uplo blas.Uplo
-	Diag blas.Diag
+	Order blas.Order
+	Data  []float64
+	N     int
+	Uplo  blas.Uplo
+	Diag  blas.Diag
 }
 
 type Symmetric struct {
+	Order     blas.Order
 	Data      []float64
 	N, Stride int
 	Uplo      blas.Uplo
 }
 
 type SymmetricBand struct {
+	Order        blas.Order
 	Data         []float64
 	N, K, Stride int
 	Uplo         blas.Uplo
 }
 
 type SymmetricPacked struct {
-	Data []float64
-	N    int
-	Uplo blas.Uplo
+	Order blas.Order
+	Data  []float64
+	N     int
+	Uplo  blas.Uplo
 }
 
 type Vector struct {
@@ -158,30 +176,22 @@ func (v Vector) Check() error {
 }
 
 func Ge2Tr(A General, d blas.Diag, ul blas.Uplo) Triangular {
-	n := A.M
-	if A.N < n {
-		n = A.N
+	n := A.Rows
+	if A.Cols < n {
+		n = A.Cols
 	}
-	return Triangular{A.Data, n, A.Stride, ul, d}
+	return Triangular{A.Order, A.Data, n, A.Stride, ul, d}
 }
 
 func Ge2Sy(A General, ul blas.Uplo) Symmetric {
-	n := A.M
-	if A.N < n {
-		n = A.N
+	n := A.Rows
+	if A.Cols < n {
+		n = A.Cols
 	}
-	return Symmetric{A.Data, n, A.Stride, ul}
+	return Symmetric{A.Order, A.Data, n, A.Stride, ul}
 }
 func must(err error) {
 	if err != nil {
 		panic(err)
-	}
-}
-
-func index(i, j, ld int) int {
-	if order == blas.RowMajor {
-		return i*ld + j
-	} else {
-		return i + j*ld
 	}
 }

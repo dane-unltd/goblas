@@ -6,94 +6,107 @@ import (
 )
 
 type GeneralCmplx struct {
-	Data   []complex128
-	M, N   int
-	Stride int
+	Order      blas.Order
+	Data       []complex128
+	Rows, Cols int
+	Stride     int
 }
 
-func NewGeneralCmplx(m, n int, data []complex128) GeneralCmplx {
+func NewGeneralCmplx(o blas.Order, m, n int, data []complex128) GeneralCmplx {
 	var A GeneralCmplx
-	if order == blas.RowMajor {
-		A = GeneralCmplx{data, m, n, n}
+	if o == blas.RowMajor {
+		A = GeneralCmplx{o, data, m, n, n}
 	} else {
-		A = GeneralCmplx{data, m, n, m}
+		A = GeneralCmplx{o, data, m, n, m}
 	}
 	must(A.Check())
 	return A
 }
 
+func (A GeneralCmplx) Index(i, j int) int {
+	if A.Order == blas.RowMajor {
+		return i*A.Stride + j
+	} else {
+		return i + j*A.Stride
+	}
+}
+
 func (A GeneralCmplx) Check() error {
-	if A.N < 0 {
+	if A.Cols < 0 {
 		return errors.New("blas: n < 0")
 	}
-	if A.M < 0 {
+	if A.Rows < 0 {
 		return errors.New("blas: m < 0")
 	}
 	if A.Stride < 1 {
 		return errors.New("blas: illegal stride")
 	}
-	if order == blas.ColMajor {
-		if A.Stride < A.M {
+	if A.Order == blas.ColMajor {
+		if A.Stride < A.Rows {
 			return errors.New("blas: illegal stride")
 		}
-		if (A.N-1)*A.Stride+A.M > len(A.Data) {
+		if (A.Cols-1)*A.Stride+A.Rows > len(A.Data) {
 			return errors.New("blas: insufficient amount of data")
 		}
-	} else if order == blas.RowMajor {
-		if A.Stride < A.N {
+	} else if A.Order == blas.RowMajor {
+		if A.Stride < A.Cols {
 			return errors.New("blas: illegal stride")
 		}
-		if (A.M-1)*A.Stride+A.N > len(A.Data) {
+		if (A.Rows-1)*A.Stride+A.Cols > len(A.Data) {
 			return errors.New("blas: insufficient amount of data")
 		}
+	} else {
+		return errors.New("blas: illegal order")
 	}
 	return nil
 }
 
 func (A GeneralCmplx) Row(i int) VectorCmplx {
-	if i >= A.M || i < 0 {
+	if i >= A.Rows || i < 0 {
 		panic("blas: index out of range")
 	}
-	if order == blas.RowMajor {
-		return VectorCmplx{A.Data[A.Stride*i:], A.N, 1}
-	} else {
-		return VectorCmplx{A.Data[i:], A.N, A.Stride}
+	if A.Order == blas.RowMajor {
+		return VectorCmplx{A.Data[A.Stride*i:], A.Cols, 1}
+	} else if A.Order == blas.ColMajor {
+		return VectorCmplx{A.Data[i:], A.Cols, A.Stride}
 	}
-	panic("unreachable")
+	panic("blas: illegal order")
 }
 
 func (A GeneralCmplx) Col(i int) VectorCmplx {
-	if i >= A.N || i < 0 {
+	if i >= A.Cols || i < 0 {
 		panic("blas: index out of range")
 	}
-	if order == blas.RowMajor {
-		return VectorCmplx{A.Data[i:], A.M, A.Stride}
-	} else {
-		return VectorCmplx{A.Data[A.Stride*i:], A.M, 1}
+	if A.Order == blas.RowMajor {
+		return VectorCmplx{A.Data[i:], A.Rows, A.Stride}
+	} else if A.Order == blas.ColMajor {
+		return VectorCmplx{A.Data[A.Stride*i:], A.Rows, 1}
 	}
-	panic("unreachable")
+	panic("blas: illegal order")
 }
 
 func (A GeneralCmplx) Sub(i, j, r, c int) GeneralCmplx {
 	must(A.Check())
-	if i >= A.M || i < 0 {
+	if i >= A.Rows || i < 0 {
 		panic("blas: index out of range")
 	}
-	if j >= A.N || i < 0 {
+	if j >= A.Cols || i < 0 {
 		panic("blas: index out of range")
 	}
 	if r < 0 || c < 0 {
 		panic("blas: r < 0 or c < 0")
 	}
-	return GeneralCmplx{A.Data[index(i, j, A.Stride):], r, c, A.Stride}
+	return GeneralCmplx{A.Order, A.Data[A.Index(i, j):], r, c, A.Stride}
 }
 
 type GeneralCmplxBand struct {
+	Order blas.Order
 	GeneralCmplx
 	KL, KU int
 }
 
 type TriangularCmplx struct {
+	Order  blas.Order
 	Data   []complex128
 	N      int
 	Stride int
@@ -102,6 +115,7 @@ type TriangularCmplx struct {
 }
 
 type TriangularCmplxBand struct {
+	Order  blas.Order
 	Data   []complex128
 	N, K   int
 	Stride int
@@ -110,34 +124,39 @@ type TriangularCmplxBand struct {
 }
 
 type TriangularCmplxPacked struct {
-	Data []complex128
-	N    int
-	Uplo blas.Uplo
-	Diag blas.Diag
+	Order blas.Order
+	Data  []complex128
+	N     int
+	Uplo  blas.Uplo
+	Diag  blas.Diag
 }
 
 type SymmetricCmplx struct {
+	Order     blas.Order
 	Data      []complex128
 	N, Stride int
 	Uplo      blas.Uplo
 }
 
 type Hermitian struct {
+	Order     blas.Order
 	Data      []complex128
 	N, Stride int
 	Uplo      blas.Uplo
 }
 
 type HermitianBand struct {
+	Order        blas.Order
 	Data         []complex128
 	N, K, Stride int
 	Uplo         blas.Uplo
 }
 
 type HermitianPacked struct {
-	Data []complex128
-	N    int
-	Uplo blas.Uplo
+	Order blas.Order
+	Data  []complex128
+	N     int
+	Uplo  blas.Uplo
 }
 
 type VectorCmplx struct {
@@ -164,17 +183,17 @@ func (v VectorCmplx) Check() error {
 }
 
 func Gec2Trc(A GeneralCmplx, d blas.Diag, ul blas.Uplo) TriangularCmplx {
-	n := A.M
-	if A.N < n {
-		n = A.N
+	n := A.Rows
+	if A.Cols < n {
+		n = A.Cols
 	}
-	return TriangularCmplx{A.Data, n, A.Stride, ul, d}
+	return TriangularCmplx{A.Order, A.Data, n, A.Stride, ul, d}
 }
 
 func Gec2He(A GeneralCmplx, ul blas.Uplo) Hermitian {
-	n := A.M
-	if A.N < n {
-		n = A.N
+	n := A.Rows
+	if A.Cols < n {
+		n = A.Cols
 	}
-	return Hermitian{A.Data, n, A.Stride, ul}
+	return Hermitian{A.Order, A.Data, n, A.Stride, ul}
 }

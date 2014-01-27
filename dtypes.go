@@ -88,7 +88,7 @@ func (A General) Sub(i, j, r, c int) General {
 	return General{A.Data[index(i, j, A.Stride):], r, c, A.Stride}
 }
 
-type GeneralBanded struct {
+type GeneralBand struct {
 	General
 	KL, KU int
 }
@@ -101,7 +101,7 @@ type Triangular struct {
 	Diag   blas.Diag
 }
 
-type TriangularBanded struct {
+type TriangularBand struct {
 	Data   []float64
 	N, K   int
 	Stride int
@@ -122,7 +122,7 @@ type Symmetric struct {
 	Uplo      blas.Uplo
 }
 
-type SymmetricBanded struct {
+type SymmetricBand struct {
 	Data         []float64
 	N, K, Stride int
 	Uplo         blas.Uplo

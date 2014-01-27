@@ -20,7 +20,7 @@ func Dgemv(tA blas.Transpose, alpha float64, A General, x Vector, beta float64, 
 	impl.Dgemv(order, tA, A.M, A.N, alpha, A.Data, A.Stride, x.Data, x.Inc, beta, y.Data, y.Inc)
 }
 
-func Dgbmv(tA blas.Transpose, alpha float64, A GeneralBanded, x Vector, beta float64, y Vector) {
+func Dgbmv(tA blas.Transpose, alpha float64, A GeneralBand, x Vector, beta float64, y Vector) {
 	impl.Dgbmv(order, tA, A.M, A.N, A.KL, A.KU, alpha, A.Data,
 		A.Stride, x.Data, x.Inc, beta, y.Data, y.Inc)
 }
@@ -29,7 +29,7 @@ func Dtrmv(tA blas.Transpose, A Triangular, x Vector) {
 	impl.Dtrmv(order, A.Uplo, tA, A.Diag, A.N, A.Data, A.Stride, x.Data, x.Inc)
 }
 
-func Dtbmv(tA blas.Transpose, A TriangularBanded, x Vector) {
+func Dtbmv(tA blas.Transpose, A TriangularBand, x Vector) {
 	impl.Dtbmv(order, A.Uplo, tA, A.Diag, A.N, A.K, A.Data, A.Stride, x.Data, x.Inc)
 }
 
@@ -41,7 +41,7 @@ func Dtrsv(tA blas.Transpose, A Triangular, x Vector) {
 	impl.Dtrsv(order, A.Uplo, tA, A.Diag, A.N, A.Data, A.Stride, x.Data, x.Inc)
 }
 
-func Dtbsv(tA blas.Transpose, A TriangularBanded, x Vector) {
+func Dtbsv(tA blas.Transpose, A TriangularBand, x Vector) {
 	impl.Dtbsv(order, A.Uplo, tA, A.Diag, A.N, A.K, A.Data, A.Stride, x.Data, x.Inc)
 }
 func Dtpsv(tA blas.Transpose, A TriangularPacked, x Vector) {
@@ -52,7 +52,7 @@ func Dsymv(alpha float64, A Symmetric, x Vector, beta float64, y Vector) {
 	impl.Dsymv(order, A.Uplo, A.N, alpha, A.Data, A.Stride, x.Data, x.Inc, beta, y.Data, y.Inc)
 }
 
-func Dsbmv(alpha float64, A SymmetricBanded, x Vector, beta float64, y Vector) {
+func Dsbmv(alpha float64, A SymmetricBand, x Vector, beta float64, y Vector) {
 	impl.Dsbmv(order, A.Uplo, A.N, A.K, alpha, A.Data, A.Stride, x.Data,
 		x.Inc, beta, y.Data, y.Inc)
 }

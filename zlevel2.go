@@ -20,7 +20,7 @@ func Zgemv(tA blas.Transpose, alpha complex128, A GeneralCmplx, x VectorCmplx, b
 	implCmplx.Zgemv(order, tA, A.M, A.N, alpha, A.Data, A.Stride, x.Data, x.Inc, beta, y.Data, y.Inc)
 }
 
-func Zgbmv(tA blas.Transpose, alpha complex128, A GeneralCmplxBanded, x VectorCmplx, beta complex128, y VectorCmplx) {
+func Zgbmv(tA blas.Transpose, alpha complex128, A GeneralCmplxBand, x VectorCmplx, beta complex128, y VectorCmplx) {
 	implCmplx.Zgbmv(order, tA, A.M, A.N, A.KL, A.KU, alpha, A.Data,
 		A.Stride, x.Data, x.Inc, beta, y.Data, y.Inc)
 }
@@ -29,7 +29,7 @@ func Ztrmv(tA blas.Transpose, A TriangularCmplx, x VectorCmplx) {
 	implCmplx.Ztrmv(order, A.Uplo, tA, A.Diag, A.N, A.Data, A.Stride, x.Data, x.Inc)
 }
 
-func Ztbmv(tA blas.Transpose, A TriangularCmplxBanded, x VectorCmplx) {
+func Ztbmv(tA blas.Transpose, A TriangularCmplxBand, x VectorCmplx) {
 	implCmplx.Ztbmv(order, A.Uplo, tA, A.Diag, A.N, A.K, A.Data, A.Stride, x.Data, x.Inc)
 }
 
@@ -41,7 +41,7 @@ func Ztrsv(tA blas.Transpose, A TriangularCmplx, x VectorCmplx) {
 	implCmplx.Ztrsv(order, A.Uplo, tA, A.Diag, A.N, A.Data, A.Stride, x.Data, x.Inc)
 }
 
-func Ztbsv(tA blas.Transpose, A TriangularCmplxBanded, x VectorCmplx) {
+func Ztbsv(tA blas.Transpose, A TriangularCmplxBand, x VectorCmplx) {
 	implCmplx.Ztbsv(order, A.Uplo, tA, A.Diag, A.N, A.K, A.Data, A.Stride, x.Data, x.Inc)
 }
 func Ztpsv(tA blas.Transpose, A TriangularCmplxPacked, x VectorCmplx) {
@@ -52,7 +52,7 @@ func Zhemv(alpha complex128, A Hermitian, x VectorCmplx, beta complex128, y Vect
 	implCmplx.Zhemv(order, A.Uplo, A.N, alpha, A.Data, A.Stride, x.Data, x.Inc, beta, y.Data, y.Inc)
 }
 
-func Zhbmv(alpha complex128, A HermitianBanded, x VectorCmplx, beta complex128, y VectorCmplx) {
+func Zhbmv(alpha complex128, A HermitianBand, x VectorCmplx, beta complex128, y VectorCmplx) {
 	implCmplx.Zhbmv(order, A.Uplo, A.N, A.K, alpha, A.Data, A.Stride, x.Data,
 		x.Inc, beta, y.Data, y.Inc)
 }

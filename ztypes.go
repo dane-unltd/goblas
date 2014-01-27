@@ -88,7 +88,7 @@ func (A GeneralCmplx) Sub(i, j, r, c int) GeneralCmplx {
 	return GeneralCmplx{A.Data[index(i, j, A.Stride):], r, c, A.Stride}
 }
 
-type GeneralCmplxBanded struct {
+type GeneralCmplxBand struct {
 	GeneralCmplx
 	KL, KU int
 }
@@ -101,7 +101,7 @@ type TriangularCmplx struct {
 	Diag   blas.Diag
 }
 
-type TriangularCmplxBanded struct {
+type TriangularCmplxBand struct {
 	Data   []complex128
 	N, K   int
 	Stride int
@@ -128,7 +128,7 @@ type Hermitian struct {
 	Uplo      blas.Uplo
 }
 
-type HermitianBanded struct {
+type HermitianBand struct {
 	Data         []complex128
 	N, K, Stride int
 	Uplo         blas.Uplo
